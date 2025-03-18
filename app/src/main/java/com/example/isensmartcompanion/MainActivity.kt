@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
                     Greeting(
                         name = "Edouard",
                         modifier = Modifier.padding(innerPadding)
+
                     )
                 }
             }
