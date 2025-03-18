@@ -5,7 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
@@ -15,12 +18,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import com.example.isensmartcompanion.ui.theme.ISENSmartCompanionTheme
+
+// Classe Event
+data class Event(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val date: String,
+    val location: String,
+    val category: String
+)
+
+fun getEventList(): List<Event> {
+    return listOf(
+        Event(1, "Soirée BDE", "Une soirée organisée par le BDE", "12 Mars 2025", "ISEN", "Social"),
+        Event(2, "Gala de Charité", "Un gala pour récolter des fonds", "25 Mars 2025", "Palais des Congrès", "Cultural"),
+        Event(3, "Journée de Cohésion", "Une journée pour renforcer la cohésion", "10 Avril 2025", "ISEN", "Sport")
+    )
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,13 +70,18 @@ fun AppNavigation() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "main",
+            startDestination = "main", // L'écran principal
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("main") { MainScreen() }
             composable("events") { EventsScreen(navController) }
             composable("agenda") { AgendaScreen() }
             composable("history") { HistoryScreen() }
+            // Route pour l'écran de détail de l'événement
+            composable("eventDetail/{eventId}") { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId")?.toInt() ?: 0
+                EventDetailScreen(eventId = eventId)
+            }
         }
     }
 }
@@ -147,18 +174,84 @@ fun InputSection() {
 // 🚀 5. Écran des événements avec bouton vers une nouvelle activité
 @Composable
 fun EventsScreen(navController: NavController) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = "Événements", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { navController.context.startActivity(Intent(navController.context, EventDetailActivity::class.java)) }) {
-            Text("Voir Détail Événement")
+    // Liste fictive d'événements
+    val events = listOf(
+        Event(1, "Soirée BDE", "Une soirée de cohésion pour les étudiants.", "2025-03-20", "ISEN Toulon", "Social"),
+        Event(2, "Gala de l'ISEN", "Le gala annuel de l'école.", "2025-04-10", "Palais des Congrès", "Culture"),
+        Event(3, "Journée de cohésion", "Journée d'activités et d'intégration.", "2025-03-28", "ISEN Toulon", "Cohésion")
+    )
+
+    // Affichage des événements dans une liste
+    LazyColumn {
+        items(events) { event ->
+            EventItem(event = event, navController = navController) // Affiche chaque événement dans un item cliquable
         }
     }
 }
+
+@Composable
+fun EventItem(event: Event, navController: NavController) {
+    // Ce composant représente un événement dans la liste
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable {
+                // Redirige vers l'écran de détail et passe l'objet Event
+                navController.navigate("eventDetail/${event.id}")
+            },
+
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = event.title, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = event.date)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = event.location)
+        }
+    }
+}
+
+@Composable
+fun EventDetailScreen(eventId: Int) {
+    // Simuler la récupération de l'événement par son ID
+    val event = getEventById(eventId)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = event.title,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "Description :")
+        Text(text = event.description, fontStyle = FontStyle.Italic)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "Date : ${event.date}")
+        Text(text = "Lieu : ${event.location}")
+        Text(text = "Catégorie : ${event.category}")
+    }
+}
+
+// Cette fonction simule la récupération d'un événement par son ID.
+fun getEventById(eventId: Int): Event {
+    val events = listOf(
+        Event(1, "Soirée BDE", "Une soirée de cohésion pour les étudiants.", "2025-03-20", "ISEN Toulon", "Social"),
+        Event(2, "Gala de l'ISEN", "Le gala annuel de l'école.", "2025-04-10", "Palais des Congrès", "Culture"),
+        Event(3, "Journée de cohésion", "Journée d'activités et d'intégration.", "2025-03-28", "ISEN Toulon", "Cohésion")
+    )
+    return events.first { it.id == eventId }
+}
+
+
+
 
 // 🚀 6. Écran Agenda
 @Composable
